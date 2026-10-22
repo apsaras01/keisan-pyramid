@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>けいさんピラミッド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: one centered column — settings chips, the stone pyramid, then big action buttons. */
+:root {
+  --sky: #e6f1fa;
+  --sky-deep: #cfe3f3;
+  --ink: #1d3557;
+  --ink-soft: #4d6381;
+  --stone: #f3cf7a;
+  --stone-edge: #c99a3a;
+  --blank: #ffffff;
+  --blank-edge: #8fb3d4;
+  --ok: #2f9e5b;
+  --ok-bg: #d9f2e2;
+  --ng: #e2574c;
+  --ng-bg: #fde3e0;
+  --hint: #7b5cd6;
+  --hint-bg: #ece6fb;
+  --chip-on: #1d3557;
+  --chip-on-fg: #ffffff;
+  --card: #ffffff;
+  --font-display: "Dela Gothic One", "Zen Maru Gothic", "Hiragino Maru Gothic ProN", sans-serif;
+  --font-body: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sky: #12203a; --sky-deep: #1b2d4d; --ink: #eef3fb; --ink-soft: #a9b8d0;
+    --stone: #c9a24e; --stone-edge: #8a6a26; --blank: #22355a; --blank-edge: #5f82b0;
+    --ok: #5fd08d; --ok-bg: #1d4532; --ng: #ff8a7f; --ng-bg: #4f2626;
+    --hint: #b7a2ff; --hint-bg: #34295a; --chip-on: #f3cf7a; --chip-on-fg: #12203a; --card: #1b2d4d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --sky: #12203a; --sky-deep: #1b2d4d; --ink: #eef3fb; --ink-soft: #a9b8d0;
+  --stone: #c9a24e; --stone-edge: #8a6a26; --blank: #22355a; --blank-edge: #5f82b0;
+  --ok: #5fd08d; --ok-bg: #1d4532; --ng: #ff8a7f; --ng-bg: #4f2626;
+  --hint: #b7a2ff; --hint-bg: #34295a; --chip-on: #f3cf7a; --chip-on-fg: #12203a; --card: #1b2d4d;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--sky);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 6vw, 2.2rem);
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+}
+.stars {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card); border-radius: 999px; padding: 6px 14px;
+  font-weight: 900; font-size: 1.1rem; font-variant-numeric: tabular-nums;
+}
+.stars .star { color: var(--stone-edge); font-size: 1.3rem; line-height: 1; }
+
+.rule { margin: 0; color: var(--ink-soft); font-weight: 700; }
+
+.settings { display: flex; flex-direction: column; gap: 10px; background: var(--card); border-radius: 16px; padding: 14px 16px; }
+.setting { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.setting .label { font-weight: 900; font-size: 0.9rem; color: var(--ink-soft); min-width: 5.5em; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  font: inherit; font-weight: 700; font-size: 0.95rem;
+  border: 2px solid var(--sky-deep); background: var(--sky); color: var(--ink);
+  border-radius: 999px; padding: 4px 14px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-fg); border-color: var(--chip-on); }
+.chip:focus-visible, .btn:focus-visible { outline: 3px solid var(--hint); outline-offset: 2px; }
+
+.stage { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-block: 12px 4px; position: relative; }
+.row { display: flex; gap: 6px; justify-content: center; }
+.cell {
+  --w: min(5.6rem, calc((100vw - 32px - (var(--n) - 1) * 6px) / var(--n)));
+  width: var(--w); height: calc(var(--w) * 0.72);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: clamp(1.15rem, calc(var(--w) * 0.36), 2rem);
+  font-variant-numeric: tabular-nums;
+  position: relative;
+}
+.cell.given {
+  background: var(--stone);
+  color: #1d2a3f;
+  box-shadow: inset 0 -5px 0 var(--stone-edge);
+}
+.cell input {
+  width: 100%; height: 100%;
+  border: 3px dashed var(--blank-edge); border-radius: 10px;
+  background: var(--blank); color: var(--ink);
+  font: inherit; text-align: center; padding: 0;
+  -moz-appearance: textfield;
+}
+.cell input:focus { outline: none; border-style: solid; border-color: var(--hint); }
+.cell.ok input { border: 3px solid var(--ok); background: var(--ok-bg); color: var(--ok); }
+.cell.ng input { border: 3px solid var(--ng); background: var(--ng-bg); color: var(--ng); }
+.cell.hinted input { border: 3px solid var(--hint); background: var(--hint-bg); }
+.cell.from { outline: 3px solid var(--hint); outline-offset: 2px; }
+.cell.ng { animation: shake 0.35s; }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+.message {
+  min-height: 3.2em; text-align: center; font-weight: 900; font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 14px; padding: 8px 12px; margin: 0;
+}
+.message.ok { background: var(--ok-bg); color: var(--ok); }
+.message.ng { background: var(--ng-bg); color: var(--ng); }
+.message.hint { background: var(--hint-bg); color: var(--hint); }
+
+.actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.btn {
+  font: inherit; font-weight: 900; font-size: 1.05rem;
+  border: none; border-radius: 14px; padding: 14px 8px; cursor: pointer;
+  background: var(--card); color: var(--ink);
+  box-shadow: inset 0 -4px 0 var(--sky-deep);
+}
+.btn.primary { background: var(--ink); color: var(--sky); box-shadow: inset 0 -4px 0 rgba(0,0,0,0.25); }
+.btn:active { transform: translateY(2px); }
+@media (max-width: 420px) { .actions { grid-template-columns: 1fr 1fr; } .actions .primary { grid-column: 1 / -1; } }
+
+.confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.confetti span {
+  position: absolute; top: -10px; width: 10px; height: 14px; border-radius: 3px;
+  animation: fall 1.6s ease-in forwards;
+}
+@keyframes fall { to { transform: translateY(340px) rotate(540deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .cell.ng { animation: none; }
+  .confetti { display: none; }
+}
+
+footer { color: var(--ink-soft); font-size: 0.85rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>けいさんピラミッド</h1>
+    <div class="stars" aria-label="あつめた ほし"><span class="star" aria-hidden="true">★</span><span id="starCount">0</span></div>
+  </header>
+
+  <p class="rule">下の 2つの 数を たすと、上の 数に なるよ。あいている ところに 数を 入れよう！</p>
+
+  <section class="settings" aria-label="もんだいの せってい">
+    <div class="setting">
+      <span class="label">だんの 数</span>
+      <div class="chips" data-key="rows">
+        <button class="chip" id="rows3" data-val="3">3だん</button>
+        <button class="chip" id="rows4" data-val="4">4だん</button>
+      </div>
+    </div>
+    <div class="setting">
+      <span class="label">むずかしさ</span>
+      <div class="chips" data-key="level">
+        <button class="chip" id="lv1" data-val="1">かんたん</button>
+        <button class="chip" id="lv2" data-val="2">ふつう</button>
+        <button class="chip" id="lv3" data-val="3">むずかしい</button>
+      </div>
+    </div>
+    <div class="setting">
+      <span class="label">もんだい</span>
+      <div class="chips" data-key="mode">
+        <button class="chip" id="modeAdd" data-val="add">たしざん だけ</button>
+        <button class="chip" id="modeMix" data-val="mix">ひきざんも</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="stage" id="stage"></div>
+
+  <p class="message" id="message" aria-live="polite"></p>
+
+  <div class="actions">
+    <button class="btn" id="hintBtn">ヒント</button>
+    <button class="btn primary" id="checkBtn">こたえあわせ</button>
+    <button class="btn" id="nextBtn">つぎの もんだい</button>
+  </div>
+
+  <footer id="levelNote"></footer>
+</div>
+
+<script>
+(function () {
+  const LEVELS = {
+    1: { max: 100, note: "てっぺんは 100まで" },
+    2: { max: 300, note: "てっぺんは 300まで" },
+    3: { max: 999, note: "てっぺんは 999まで" },
+  };
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("kp_" + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem("kp_" + k, JSON.stringify(v)); } catch (e) {} },
+  };
+
+  const state = {
+    rows: store.get("rows", 3),
+    level: store.get("level", 1),
+    mode: store.get("mode", "add"),
+    stars: store.get("stars", 0),
+    values: [],   // values[r][c], r=0 is the top
+    given: [],    // given[r][c] true when shown as a stone
+    solved: false,
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const stage = $("stage"), message = $("message");
+  const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+
+  function build(bottom) {
+    const n = bottom.length, v = [];
+    v[n - 1] = bottom.slice();
+    for (let r = n - 2; r >= 0; r--) {
+      v[r] = [];
+      for (let c = 0; c <= r; c++) v[r][c] = v[r + 1][c] + v[r + 1][c + 1];
+    }
+    return v;
+  }
+
+  function makeValues(n, max) {
+    const coefSum = Math.pow(2, n - 1);
+    const avg = max / coefSum;
+    const lo = Math.max(1, Math.floor(avg / 4));
+    const hi = Math.max(lo + 2, Math.floor(avg * 1.7));
+    for (let t = 0; t < 500; t++) {
+      const bottom = Array.from({ length: n }, () => rand(lo, hi));
+      const v = build(bottom);
+      if (v[0][0] <= max && v[0][0] >= max * 0.45) return v;
+    }
+    return build(Array.from({ length: n }, () => lo));
+  }
+
+  // A cell can be worked out when two of a (top, left, right) trio are known.
+  function solvable(n, known) {
+    const k = known.map((row) => row.slice());
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let r = 0; r < n - 1; r++) {
+        for (let c = 0; c <= r; c++) {
+          const trio = [[r, c], [r + 1, c], [r + 1, c + 1]];
+          const missing = trio.filter(([a, b]) => !k[a][b]);
+          if (missing.length === 1) { k[missing[0][0]][missing[0][1]] = true; changed = true; }
+        }
+      }
+    }
+    return k.every((row) => row.every(Boolean));
+  }
+
+  function makeGiven(n, mode) {
+    if (mode === "add") {
+      return Array.from({ length: n }, (_, r) => Array.from({ length: r + 1 }, () => r === n - 1));
+    }
+    const cells = [];
+    for (let r = 0; r < n; r++) for (let c = 0; c <= r; c++) cells.push([r, c]);
+    const target = cells.length - n;
+    let best = null, bestHidden = -1;
+    for (let t = 0; t < 300; t++) {
+      const g = Array.from({ length: n }, (_, r) => Array(r + 1).fill(true));
+      const order = cells.slice().sort(() => Math.random() - 0.5);
+      let hidden = 0;
+      for (const [r, c] of order) {
+        g[r][c] = false;
+        if (solvable(n, g)) hidden++; else g[r][c] = true;
+      }
+      const bottomHidden = g[n - 1].some((x) => !x);
+      if (bottomHidden && hidden > bestHidden) { best = g; bestHidden = hidden; }
+      if (bottomHidden && hidden === target) break;
+    }
+    return best;
+  }
+
+  function newPuzzle() {
+    const n = state.rows;
+    state.values = makeValues(n, LEVELS[state.level].max);
+    state.given = makeGiven(n, state.mode);
+    state.solved = false;
+    render();
+    setMessage("", "");
+    const first = stage.querySelector("input");
+    if (first && window.matchMedia("(pointer: fine)").matches) first.focus();
+  }
+
+  function render() {
+    const n = state.rows;
+    stage.innerHTML = "";
+    stage.style.setProperty("--n", n);
+    for (let r = 0; r < n; r++) {
+      const row = document.createElement("div");
+      row.className = "row";
+      for (let c = 0; c <= r; c++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.r = r; cell.dataset.c = c;
+        if (state.given[r][c]) {
+          cell.classList.add("given");
+          cell.textContent = state.values[r][c];
+        } else {
+          const inp = document.createElement("input");
+          inp.id = "cell-" + r + "-" + c;
+          inp.type = "text";
+          inp.inputMode = "numeric";
+          inp.autocomplete = "off";
+          inp.maxLength = 3;
+          inp.setAttribute("aria-label", "上から " + (r + 1) + "だんめ、左から " + (c + 1) + "つめ");
+          inp.addEventListener("input", () => {
+            inp.value = inp.value.replace(/[^0-9０-９]/g, "").replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xFEE0));
+            cell.classList.remove("ok", "ng", "hinted");
+            clearFrom();
+          });
+          inp.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") { e.preventDefault(); const nxt = nextEmpty(inp); nxt ? nxt.focus() : check(); }
+          });
+          cell.appendChild(inp);
+        }
+        row.appendChild(cell);
+      }
+      stage.appendChild(row);
+    }
+  }
+
+  const cellEl = (r, c) => stage.querySelector('.cell[data-r="' + r + '"][data-c="' + c + '"]');
+  function nextEmpty(from) {
+    const all = [...stage.querySelectorAll("input")];
+    const i = all.indexOf(from);
+    return all.slice(i + 1).concat(all.slice(0, i)).find((x) => x.value === "");
+  }
+  function clearFrom() { stage.querySelectorAll(".from").forEach((e) => e.classList.remove("from")); }
+  function setMessage(text, kind) { message.textContent = text; message.className = "message" + (kind ? " " + kind : ""); }
+
+  // A cell counts as known when it is a stone or already filled in correctly.
+  function isKnown(r, c) {
+    if (state.given[r][c]) return true;
+    const inp = cellEl(r, c).querySelector("input");
+    return inp.value !== "" && Number(inp.value) === state.values[r][c];
+  }
+
+  function check() {
+    if (state.solved) return;
+    let empty = 0, wrong = 0;
+    stage.querySelectorAll(".cell").forEach((cell) => {
+      const inp = cell.querySelector("input");
+      if (!inp) return;
+      cell.classList.remove("ok", "ng", "hinted");
+      if (inp.value === "") { empty++; return; }
+      const right = Number(inp.value) === state.values[cell.dataset.r][cell.dataset.c];
+      void cell.offsetWidth;
+      cell.classList.add(right ? "ok" : "ng");
+      if (!right) wrong++;
+    });
+    clearFrom();
+    if (wrong > 0) {
+      setMessage("あかい ところを もう一ど けいさんしてみよう。", "ng");
+    } else if (empty > 0) {
+      setMessage("ここまで ぜんぶ せいかい！ のこりも がんばろう。", "ok");
+    } else {
+      state.solved = true;
+      state.stars++;
+      store.set("stars", state.stars);
+      $("starCount").textContent = state.stars;
+      setMessage("ぜんぶ せいかい！ ほしを 1つ ゲット ★", "ok");
+      celebrate();
+    }
+  }
+
+  function hint() {
+    if (state.solved) return;
+    clearFrom();
+    stage.querySelectorAll(".hinted").forEach((e) => e.classList.remove("hinted"));
+    const n = state.rows;
+    // Look from the bottom up for a blank that can be worked out right now.
+    for (let r = n - 1; r >= 0; r--) {
+      for (let c = 0; c <= r; c++) {
+        if (isKnown(r, c)) continue;
+        const cell = cellEl(r, c);
+        if (r < n - 1 && isKnown(r + 1, c) && isKnown(r + 1, c + 1)) {
+          return showHint(cell, [[r + 1, c], [r + 1, c + 1]], "下の 2つを たしてみよう：" + state.values[r + 1][c] + " ＋ " + state.values[r + 1][c + 1]);
+        }
+        const parents = [[r - 1, c - 1, c - 1], [r - 1, c, c + 1]];
+        for (const [pr, pc, sc] of parents) {
+          if (pr < 0 || pc < 0 || pc > pr) continue;
+          if (isKnown(pr, pc) && isKnown(r, sc)) {
+            return showHint(cell, [[pr, pc], [r, sc]], "上の 数から となりの 数を ひいてみよう：" + state.values[pr][pc] + " − " + state.values[r][sc]);
+          }
+        }
+      }
+    }
+    setMessage("まちがいを なおすと、つぎの ヒントが 出るよ。", "hint");
+  }
+
+  function showHint(cell, froms, text) {
+    cell.classList.remove("ok", "ng");
+    cell.classList.add("hinted");
+    froms.forEach(([r, c]) => cellEl(r, c).classList.add("from"));
+    cell.querySelector("input").focus();
+    setMessage(text, "hint");
+  }
+
+  function celebrate() {
+    const box = document.createElement("div");
+    box.className = "confetti";
+    const colors = ["#f3cf7a", "#2f9e5b", "#e2574c", "#7b5cd6", "#3d8fd6"];
+    for (let i = 0; i < 36; i++) {
+      const s = document.createElement("span");
+      s.style.left = Math.random() * 100 + "%";
+      s.style.background = colors[i % colors.length];
+      s.style.animationDelay = Math.random() * 0.5 + "s";
+      box.appendChild(s);
+    }
+    stage.appendChild(box);
+    setTimeout(() => box.remove(), 2400);
+  }
+
+  function syncChips() {
+    document.querySelectorAll(".chips").forEach((group) => {
+      const key = group.dataset.key;
+      group.querySelectorAll(".chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.val) === String(state[key])));
+    });
+    $("levelNote").textContent = LEVELS[state.level].note + "・" + state.rows + "だん";
+  }
+
+  document.querySelectorAll(".chips").forEach((group) => {
+    group.addEventListener("click", (e) => {
+      const b = e.target.closest(".chip");
+      if (!b) return;
+      const key = group.dataset.key;
+      state[key] = key === "mode" ? b.dataset.val : Number(b.dataset.val);
+      store.set(key, state[key]);
+      syncChips();
+      newPuzzle();
+    });
+  });
+  $("checkBtn").addEventListener("click", check);
+  $("hintBtn").addEventListener("click", hint);
+  $("nextBtn").addEventListener("click", newPuzzle);
+
+  $("starCount").textContent = state.stars;
+  syncChips();
+  newPuzzle();
+})();
+</script>
+</body>
+</html>
